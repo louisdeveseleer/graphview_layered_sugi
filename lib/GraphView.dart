@@ -41,13 +41,20 @@ typedef NodeWidgetBuilder = Widget Function(Node node);
 
 class GraphView extends StatefulWidget {
   final Graph graph;
+  final List<List<Node>> layers;
   final Algorithm algorithm;
   final Paint? paint;
   final NodeWidgetBuilder builder;
   final bool animated;
 
   GraphView(
-      {Key? key, required this.graph, required this.algorithm, this.paint, required this.builder, this.animated = true})
+      {Key? key,
+      required this.graph,
+      this.layers = const [],
+      required this.algorithm,
+      this.paint,
+      required this.builder,
+      this.animated = true})
       : super(key: key);
 
   @override
@@ -69,6 +76,7 @@ class _GraphViewState extends State<GraphView> {
       return _GraphView(
         key: widget.key,
         graph: widget.graph,
+        layers: widget.layers,
         algorithm: widget.algorithm,
         paint: widget.paint,
         builder: widget.builder,
@@ -79,10 +87,17 @@ class _GraphViewState extends State<GraphView> {
 
 class _GraphView extends MultiChildRenderObjectWidget {
   final Graph graph;
+  final List<List<Node>> layers;
   final Algorithm algorithm;
   final Paint? paint;
 
-  _GraphView({Key? key, required this.graph, required this.algorithm, this.paint, required NodeWidgetBuilder builder})
+  _GraphView(
+      {Key? key,
+      required this.graph,
+      required this.layers,
+      required this.algorithm,
+      this.paint,
+      required NodeWidgetBuilder builder})
       : super(key: key, children: _extractChildren(graph, builder)) {
     assert(() {
       if (children.isEmpty) {
@@ -109,7 +124,7 @@ class _GraphView extends MultiChildRenderObjectWidget {
 
   @override
   RenderCustomLayoutBox createRenderObject(BuildContext context) {
-    return RenderCustomLayoutBox(graph, algorithm, paint);
+    return RenderCustomLayoutBox(graph, layers, algorithm, paint);
   }
 
   @override
@@ -122,19 +137,24 @@ class _GraphView extends MultiChildRenderObjectWidget {
 }
 
 class RenderCustomLayoutBox extends RenderBox
-    with ContainerRenderObjectMixin<RenderBox, NodeBoxData>, RenderBoxContainerDefaultsMixin<RenderBox, NodeBoxData> {
+    with
+        ContainerRenderObjectMixin<RenderBox, NodeBoxData>,
+        RenderBoxContainerDefaultsMixin<RenderBox, NodeBoxData> {
   late Graph _graph;
+  late List<List<Node>> _layers;
   late Algorithm _algorithm;
   late Paint _paint;
 
   RenderCustomLayoutBox(
     Graph graph,
+    List<List<Node>> layers,
     Algorithm algorithm,
     Paint? paint, {
     List<RenderBox>? children,
   }) {
     _algorithm = algorithm;
     _graph = graph;
+    _layers = layers;
     edgePaint = paint;
     addAll(children);
   }
@@ -193,7 +213,7 @@ class RenderCustomLayoutBox extends RenderBox
       position++;
     }
 
-    size = algorithm.run(graph, 10, 10);
+    size = algorithm.run(graph, 10, 10, layers: _layers);
 
     child = firstChild;
     position = 0;
@@ -243,7 +263,11 @@ class _GraphViewAnimated extends StatefulWidget {
   final stepMilis = 25;
 
   _GraphViewAnimated(
-      {Key? key, required this.graph, required this.algorithm, this.paint, required NodeWidgetBuilder builder}) {
+      {Key? key,
+      required this.graph,
+      required this.algorithm,
+      this.paint,
+      required NodeWidgetBuilder builder}) {
     graph.nodes.forEach((node) {
       nodes.add(node.data ?? builder(node));
     });

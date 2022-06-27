@@ -34,9 +34,10 @@ class SugiyamaAlgorithm extends Algorithm {
   }
 
   @override
-  Size run(Graph? graph, double shiftX, double shiftY) {
-    this.graph = copyGraph(graph!);
+  Size run(Graph graph, double shiftX, double shiftY, {List<List<Node>>? layers}) {
+    this.graph = copyGraph(graph);
     reset();
+    this.layers = List<List<Node>>.from(layers ?? []);
     initSugiyamaData();
     cycleRemoval();
     layerAssignment();
@@ -124,13 +125,21 @@ class SugiyamaAlgorithm extends Algorithm {
       return;
     }
     // build layers;
-    final copiedGraph = copyGraph(graph);
-    var roots = getRootNodes(copiedGraph);
+    if (layers.isEmpty) {
+      final copiedGraph = copyGraph(graph);
+      var roots = getRootNodes(copiedGraph);
 
-    while (roots.isNotEmpty) {
-      layers.add(roots);
-      copiedGraph.removeNodes(roots);
-      roots = getRootNodes(copiedGraph);
+      while (roots.isNotEmpty) {
+        layers.add(roots);
+        copiedGraph.removeNodes(roots);
+        roots = getRootNodes(copiedGraph);
+      }
+    } else {
+      for (final layer in layers) {
+        for (final node in layer) {
+          nodeData[node]?.layer = layers.indexOf(layer);
+        }
+      }
     }
 
     // add dummy's;
@@ -142,7 +151,9 @@ class SugiyamaAlgorithm extends Algorithm {
       for (var node in currentLayer) {
         final edges = graph.edges
             .where((element) =>
-                element.source == node && (nodeData[element.destination]!.layer - nodeData[node]!.layer).abs() > 1).toList();
+                element.source == node &&
+                (nodeData[element.destination]!.layer - nodeData[node]!.layer).abs() > 1)
+            .toList();
 
         final iterator = edges.iterator;
 
@@ -277,7 +288,9 @@ class SugiyamaAlgorithm extends Algorithm {
           if (positions.length == 1) {
             median = positions[0];
           } else {
-            median = (positions[(positions.length / 2.0).ceil()] + positions[(positions.length / 2.0).ceil() - 1]) ~/ 2;
+            median = (positions[(positions.length / 2.0).ceil()] +
+                    positions[(positions.length / 2.0).ceil() - 1]) ~/
+                2;
           }
 
           for (var i = currentLayer.length - 1; i > 1; i--) {
@@ -302,7 +315,8 @@ class SugiyamaAlgorithm extends Algorithm {
         final southernNodes = layers[l + 1];
 
         // Create a map that holds the index of every [Node]. Key is the [Node] and value is the index of the item.
-        final indexMap = HashMap.of(northernNodes.asMap().map((key, value) => MapEntry(value, key)));
+        final indexMap =
+            HashMap.of(northernNodes.asMap().map((key, value) => MapEntry(value, key)));
 
         for (var i = 0; i < southernNodes.length - 1; i++) {
           final v = southernNodes[i];
@@ -327,14 +341,16 @@ class SugiyamaAlgorithm extends Algorithm {
   }
 
   // counts the number of edge crossings if n2 appears to the left of n1 in their layer.;
-  int crossingCount(HashMap<Node, int> northernNodes, Node? n1, Node? n2) {
-    final indexOf = (Node node) => northernNodes[node]!;
+  int crossingCount(HashMap<Node, int> northernNodes, Node n1, Node n2) {
+    final indexOf = (Node node) => northernNodes[node];
     var crossing = 0;
     final parentNodesN1 = nodeData[n1]!.predecessorNodes;
     final parentNodesN2 = nodeData[n2]!.predecessorNodes;
     parentNodesN2.forEach((pn2) {
       final indexOfPn2 = indexOf(pn2);
-      parentNodesN1.where((it) => indexOfPn2 < indexOf(it)).forEach((element) {
+      parentNodesN1
+          .where((it) => (indexOfPn2 ?? double.maxFinite) < (indexOf(it) ?? -1))
+          .forEach((element) {
         crossing++;
       });
     });
@@ -413,7 +429,8 @@ class SugiyamaAlgorithm extends Algorithm {
           final r = root[k][v];
           blockWidth[k][r] = max(blockWidth[k][r]!, isVertical() ? v.width : v.height);
         });
-        horizontalCompactation(align[k], root[k], sink[k], shift[k], blockWidth[k], x[k], isLeftToRight, isDownward);
+        horizontalCompactation(
+            align[k], root[k], sink[k], shift[k], blockWidth[k], x[k], isLeftToRight, isDownward);
       }
     }
 
@@ -570,8 +587,8 @@ class SugiyamaAlgorithm extends Algorithm {
     return type1Conflicts;
   }
 
-  void verticalAlignment(Map<Node?, Node?> root, Map<Node?, Node?> align, Map<int,int> type1Conflicts,
-      bool downward, bool leftToRight) {
+  void verticalAlignment(Map<Node?, Node?> root, Map<Node?, Node?> align,
+      Map<int, int> type1Conflicts, bool downward, bool leftToRight) {
     // for all Level;
 
     var layersa = downward ? layers : layers.reversed;
@@ -608,8 +625,15 @@ class SugiyamaAlgorithm extends Algorithm {
     }
   }
 
-  void horizontalCompactation(Map<Node?, Node?> align, Map<Node?, Node?> root, Map<Node?, Node?> sink,
-      Map<Node?, double> shift, Map<Node?, double> blockWidth, Map<Node?, double?> x, bool leftToRight, bool downward) {
+  void horizontalCompactation(
+      Map<Node?, Node?> align,
+      Map<Node?, Node?> root,
+      Map<Node?, Node?> sink,
+      Map<Node?, double> shift,
+      Map<Node?, double> blockWidth,
+      Map<Node?, double?> x,
+      bool leftToRight,
+      bool downward) {
     // calculate class relative coordinates for all roots;
     // If the layers are traversed from right to left, a reverse iterator is needed (note that this does not change the original list of layers)
     var layersa = leftToRight ? layers : layers.reversed;
@@ -653,8 +677,15 @@ class SugiyamaAlgorithm extends Algorithm {
     });
   }
 
-  void placeBlock(Node? v, Map<Node?, Node?> sink, Map<Node?, double> shift, Map<Node?, double?> x,
-      Map<Node?, Node?> align, Map<Node?, double> blockWidth, Map<Node?, Node?> root, bool leftToRight) {
+  void placeBlock(
+      Node? v,
+      Map<Node?, Node?> sink,
+      Map<Node?, double> shift,
+      Map<Node?, double?> x,
+      Map<Node?, Node?> align,
+      Map<Node?, double> blockWidth,
+      Map<Node?, Node?> root,
+      bool leftToRight) {
     if (x[v] == double.negativeInfinity) {
       var nodeSeparation = configuration.nodeSeparation;
       x[v] = 0;
@@ -664,7 +695,8 @@ class SugiyamaAlgorithm extends Algorithm {
         do {
           // if not first node on layer;
           if (leftToRight && positionOfNode(currentNode) > 0 ||
-              !leftToRight && positionOfNode(currentNode) < layers[getLayerIndex(currentNode)].length - 1) {
+              !leftToRight &&
+                  positionOfNode(currentNode) < layers[getLayerIndex(currentNode)].length - 1) {
             final pred = predecessor(currentNode, leftToRight);
             /* Get the root of u (proceeding all the way upwards in the block) */
             final u = root[pred];

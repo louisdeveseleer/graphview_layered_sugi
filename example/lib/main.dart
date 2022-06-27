@@ -112,11 +112,11 @@ class Home extends StatelessWidget {
                   borderRadius: BorderRadius.circular(30),
                 ),
                 onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => LayerGraphPageFromJson(),
-                  ),
-                ),
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => LayerGraphPageFromJson(),
+                      ),
+                    ),
                 child: Text(
                   'Layer Graph From Json ',
                   style: TextStyle(fontSize: 30),

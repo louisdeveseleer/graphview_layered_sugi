@@ -21,10 +21,10 @@ class BuchheimWalkerAlgorithm extends Algorithm {
   }
 
   @override
-  Size run(Graph? graph, double shiftX, double shiftY) {
+  Size run(Graph graph, double shiftX, double shiftY, {List<List<Node>>? layers}) {
     nodeData.clear();
     initData(graph);
-    var firstNode = getFirstNode(graph!);
+    var firstNode = getFirstNode(graph);
     firstWalk(graph, firstNode, 0, 0);
     secondWalk(graph, firstNode, 0.0);
     checkUnconnectedNotes(graph);

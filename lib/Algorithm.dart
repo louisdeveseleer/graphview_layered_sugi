@@ -7,7 +7,7 @@ abstract class Algorithm {
   /// @param shiftY Shifts the y-coordinate origin
   /// @param shiftX Shifts the x-coordinate origin
   /// @return The size of the graph
-  Size run(Graph? graph, double shiftX, double shiftY);
+  Size run(Graph graph, double shiftX, double shiftY, {List<List<Node>>? layers});
 
   void setFocusedNode(Node node);
 

@@ -118,8 +118,8 @@ class FruchtermanReingoldAlgorithm implements Algorithm {
   var focusedNode;
 
   @override
-  Size run(Graph? graph, double shiftX, double shiftY) {
-    var size = findBiggestSize(graph!) * graph.nodeCount();
+  Size run(Graph graph, double shiftX, double shiftY, {List<List<Node>>? layers}) {
+    var size = findBiggestSize(graph) * graph.nodeCount();
     graphWidth = size;
     graphHeight = size;
 
