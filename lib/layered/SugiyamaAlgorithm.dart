@@ -653,6 +653,10 @@ class SugiyamaAlgorithm extends Algorithm {
     var i = downward ? 0 : layers.length - 1;
     while (downward && i <= layers.length - 1 || !downward && i >= 0) {
       final currentLevel = layers[i];
+      if (currentLevel.isEmpty) {
+        i = downward ? i + 1 : i - 1;
+        continue;
+      }
       final v = currentLevel[leftToRight ? 0 : currentLevel.length - 1];
       if (v == sink[root[v]]) {
         final oldShift = shift[v]!;
